@@ -1,99 +1,36 @@
 package com.oddinstitute.motions
 
-import android.animation.ObjectAnimator
 import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
-import android.view.Gravity
-import android.view.View
+import android.util.TypedValue
 import android.view.ViewGroup
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
-import android.view.animation.LinearInterpolator
 import android.widget.RelativeLayout
 import android.widget.SeekBar
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.constraintlayout.widget.ConstraintLayout
 import kotlinx.android.synthetic.main.activity_main.*
 
 
-enum class Channel
-{
-    TranslateX,
-    TranslateY,
-    Rotate,
-    ScaleX,
-    ScaleY,
-    Alpha,
-    FillColor,
-    StrokeColor,
-    Morph,
-}
-
-
-class Keyframe(var frame: Int,
-               var value: Float)
-
-class Frame(var value: Float)
-
-class Motion
-{
-    var tx: ArrayList<Keyframe> = arrayListOf()
-    var txF: ArrayList<Frame> = arrayListOf()
-
-var ty: ArrayList<Keyframe> = arrayListOf()
-    var tyF: ArrayList<Frame> = arrayListOf()
-
-
-
-
-    // we need a system to make sure no two keyframes get added at the same frame
-    // we need a way to add multiple keyframes
-
-//    fun <T> addKeyframe (keyframe: Keyframe<T>)
-//    {
-//        when (keyframe.channel)
-//        {
-//            Channel.TranslateX -> translateX_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.TranslateY -> translateY_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.Rotate -> rotate_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.ScaleX -> scaleX_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.ScaleY -> scaleY_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.Alpha -> alpha_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.FillColor -> fillColor_Keys.add(keyframe as Keyframe<Int>)
-//            Channel.StrokeColor -> strokeColor_Keys.add(keyframe as Keyframe<Int>)
-//            else -> morph_Keys.add(keyframe as Keyframe<Any>)
-//        }
-//    }
-
-}
-
-
-class Time
-{
-    companion object
-    {
-        fun frame(timeInSeconds: Float): Int
-        {
-            return (timeInSeconds * 25).toInt()
-        }
-
-        fun time(frame: Int): Float
-        {
-            var timeInHalfSeconds = (frame.toFloat() / 25f)
-
-            // 12 / 25 -> .48
-
-            if (timeInHalfSeconds % .5 < .25)
-                timeInHalfSeconds -= (timeInHalfSeconds % .5).toFloat()
-            else
-                timeInHalfSeconds += (.5 - timeInHalfSeconds % .5).toFloat()
-
-
-            return timeInHalfSeconds
-        }
-    }
-}
+//enum class GroupChannel
+//{
+//    TranslateX,
+//    TranslateY,
+//
+//    Rotate,
+//
+//    ScaleX,
+//    ScaleY,
+//
+//    Alpha,
+//}
+//
+//enum class PolyChannel
+//{
+//    Data,
+//    Alpha,
+//    FillColor,
+//    StrokeColor
+//}
 
 
 //class CovarianceSample<T>
@@ -101,12 +38,120 @@ class Time
 
 class MainActivity : AppCompatActivity()
 {
+    val TAG = "MyTag"
     val lengthInSeconds = 5.5f
     var currentTime = 1.1f
+    var currentFrame = 0
 
 
+    var motionsTrackLayoutWidth = 0
+    var motionsTrackLayoutHeight = 0
 
-    var txLayoutWidth = 0
+
+    fun addMotionToTrack(motion: Motion)
+    {
+        motion.calculateStartEndLength()
+
+
+        // we now have the start and end frames
+
+
+//        val width =
+//                (motion.length.toFloat() / Time.secondsToFrame(lengthInSeconds)
+//                        .toFloat()) * motionsTrackLayoutWidth
+//        val marginLeft =
+//                (motion.startFrame.toFloat() / Time.secondsToFrame(lengthInSeconds)
+//                        .toFloat()) * motionsTrackLayoutWidth
+
+
+        val motionClip = Clip(this,
+                              Time.secondsToFrame(lengthInSeconds),
+                              motion,
+                              motionsTrackLayoutHeight,
+                              motionsTrackLayoutWidth,
+                              motionsTrackLayout)
+
+//        val motionClip = Clip(width.toInt(),
+//                              motionsTrackLayoutHeight,
+//                              marginLeft.toInt(),
+//                              this,
+//                              motion,
+//                              motionsTrackLayout)
+
+
+    }
+
+
+//    fun makeAllFramesForMotion()
+//    {
+//        for (i in 0 until viewMotions.count())
+//        {
+//            val motion = viewMotions[i]
+//            motion.txF.clear()
+//            motion.tyF.clear()
+//
+//            if (motion.tx.count() > 0)
+//            {
+//                // make txF
+//
+//                var tempValue = 1f
+//                for (i in 0..137)
+//                {
+//                    tempValue += 2.75f
+//                    val frame = Frame(tempValue)
+//                    motion.txF.add(frame)
+//                }
+//            }
+//            if (motion.ty.count() > 0)
+//            {
+//                // make tyF
+//
+//                var tempValue1 = 1f
+//                for (i in 0..137)
+//                {
+//                    tempValue1 += 4.75f
+//                    val frame = Frame(tempValue1)
+//                    motion.tyF.add(frame)
+//                }
+//            }
+//
+//            viewMotions[i] = motion
+//        }
+//    }
+
+//    var viewMotions: ArrayList<Motion> = arrayListOf()
+
+
+    fun placeTimeTick()
+    {
+        val ratio =
+                motionsTrackLayoutWidth / Time.secondsToFrame(lengthInSeconds)
+                        .toFloat() // 2.45
+
+        val place = currentFrame.toFloat() * ratio
+
+
+        val myParams = RelativeLayout.LayoutParams(pixelsFromDp(3),
+                                                   ViewGroup.LayoutParams.MATCH_PARENT)
+
+
+        myParams.setMargins(place.toInt(),
+                            0,
+                            0,
+                            0)
+
+        timeTick.bringToFront()
+        timeTick.layoutParams = myParams
+
+    }
+
+    fun pixelsFromDp(dps: Int): Int
+    {
+        val pixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                                               dps.toFloat(),
+                                               resources.displayMetrics)
+        return pixels.toInt()
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?)
@@ -114,95 +159,51 @@ class MainActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        AppData.makeDummyMotions(Time.secondsToFrame(lengthInSeconds))
 
-        txLayout.viewTreeObserver
+
+        motionsTrackLayout.viewTreeObserver
                 .addOnGlobalLayoutListener(object : OnGlobalLayoutListener
                                            {
                                                override fun onGlobalLayout()
                                                {
-                                                   txLayout.getViewTreeObserver()
+                                                   motionsTrackLayout.viewTreeObserver
                                                            .removeOnGlobalLayoutListener(this)
-                                                   txLayoutWidth = txLayout.width
+                                                   motionsTrackLayoutWidth =
+                                                           motionsTrackLayout.width
+                                                   motionsTrackLayoutHeight =
+                                                           motionsTrackLayout.height
 
-                                                   Log.d("MyTag", "width is: ${txLayoutWidth}")
-
-
-
-                                                   var tempFrameGap = 35
-                                                   var tempWidth = (tempFrameGap.toFloat() / Time.frame(lengthInSeconds).toFloat()) * txLayoutWidth
-
-
-                                                   var tempStartFrame = 20
-                                                   var tempMarginLeft = (tempStartFrame / Time.frame(lengthInSeconds).toFloat())   * txLayoutWidth
-
-
-                                                   val clip = View(this@MainActivity)
-                                                   val myParams = RelativeLayout.LayoutParams(tempWidth.toInt(),
-                                                                                              ViewGroup.LayoutParams.MATCH_PARENT)
-
-
-                                                   myParams.setMargins(tempMarginLeft.toInt(), 0, 0, 0)
-
-                                                   clip.layoutParams = myParams
-
-
-                                                   clip.setBackgroundColor(Color.GREEN)
-                                                   txLayout.addView(clip)
-
-
+                                                   for (i in 0 until AppData.viewMotions.count())
+                                                   {
+//                                                       if (i == 1 )
+                                                       addMotionToTrack(AppData.viewMotions[i])
+                                                   }
                                                }
                                            })
 
 
+//        makeDummyMotions()
 
 
+//        makeAllFramesForMotion()
 
-        val keyframeTranslateX_1 =
-                Keyframe(0,
-                         100f)
-        val keyframeTranslateX_2 =
-                Keyframe(50,
-                         200f)
-
-        val moveRightMotion = Motion()
-        moveRightMotion.tx.add(keyframeTranslateX_1)
-        moveRightMotion.tx.add(keyframeTranslateX_2)
-
-
-
-        val keyframeTranslateY_1 =
-                Keyframe(0,
-                         100f)
-        val keyframeTranslateY_2 =
-                Keyframe(50,
-                         200f)
-
-        val moveDownMotion = Motion()
-        moveDownMotion.tx.add(keyframeTranslateY_1)
-        moveDownMotion.tx.add(keyframeTranslateY_2)
+//        moveVerticallyButton.setOnClickListener {
+//
+//            val ty1 = ObjectAnimator.ofFloat(redView,
+//                                             View.TRANSLATION_X,
+//                                             redView.translationX,
+//                                             redView.translationX + 200f) // this way, we add
+//            ty1.duration = 500
+//            ty1.interpolator = LinearInterpolator() // BounceInterpolator()
+//            ty1.start()
+//
+//        }
 
 
-
-
-        moveVerticallyButton.setOnClickListener {
-
-            val ty1 = ObjectAnimator.ofFloat(redView,
-                                             View.TRANSLATION_X,
-                                             redView.translationX,
-                                             redView.translationX + 200f) // this way, we add
-            ty1.duration = 500
-            ty1.interpolator = LinearInterpolator() // BounceInterpolator()
-            ty1.start()
-
-        }
-
-
-
-
-
-        timeSeekbar.max = Time.frame(lengthInSeconds)
-        timeSeekbar.progress = Time.frame(currentTime)
-        timeTextView.text = "${Time.time(timeSeekbar.progress)}\n${timeSeekbar.progress}"
+        timeSeekbar.max = Time.secondsToFrame(lengthInSeconds)
+        timeSeekbar.progress = Time.secondsToFrame(currentTime)
+        timeTextView.text = "${Time.framesToSeconds(timeSeekbar.progress)}\n${timeSeekbar.progress}"
 
 
         timeSeekbar.setOnSeekBarChangeListener(
@@ -212,7 +213,41 @@ class MainActivity : AppCompatActivity()
                                                    progress: Int,
                                                    b: Boolean)
                     {
-                        timeTextView.text = "${Time.time(progress)}\n${progress}"
+                        timeTextView.text = "${Time.framesToSeconds(progress)}\n${progress}"
+
+                        currentFrame = progress
+                        placeTimeTick()
+
+                        var tx = 0f
+                        var ty = 0f
+
+                        var txCounter = 0
+                        var tyCounter = 0
+
+                        for (motion in AppData.viewMotions)
+                        {
+                            if (motion.txF.count() > 0)
+                            {
+                                txCounter += 1
+                                tx = motion.txF[progress].value
+                            }
+                            if (motion.tyF.count() > 0)
+                            {
+                                tyCounter += 1
+                                ty = motion.tyF[progress].value
+                            }
+                        }
+
+                        if (txCounter != 0)
+                        {
+                            redView.translationX = (tx / txCounter.toFloat())
+                        }
+
+                        if (tyCounter != 0)
+                        {
+                            redView.translationY = (ty / tyCounter.toFloat())
+                        }
+
                     }
 
                     override fun onStartTrackingTouch(seekBar: SeekBar)
@@ -229,10 +264,7 @@ class MainActivity : AppCompatActivity()
                 })
 
 
-
-
-
-
-
     }
+
+
 }
