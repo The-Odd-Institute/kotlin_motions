@@ -77,10 +77,10 @@ class AppData
 
 
 
-        fun makeFramesForChannel (keyframes: ArrayList<Keyframe>, length: Int) : ArrayList <Frame>
+        fun makeFramesForChannel (keyframes: ArrayList<Keyframe>, length: Int) : ArrayList <SimpleFrame>
         {
 
-            var frames = ArrayList<Frame>()
+            var frames = ArrayList<SimpleFrame>()
 
             if (keyframes.count() == 0 )
             {
@@ -93,7 +93,7 @@ class AppData
                 val keyframe = keyframes[0]
                 for (i in 0..length)
                 {
-                    val frame = Frame(keyframe.value)
+                    val frame = SimpleFrame(keyframe.value)
                     frames.add(frame)
                 }
             }
@@ -104,7 +104,7 @@ class AppData
                 // fill the frames
                 for (i in 0..length)
                 {
-                    frames.add(Frame(0f))
+                    frames.add(SimpleFrame(0f))
                 }
 
                 val firstKeyFrame = keyframes.first()
@@ -112,12 +112,12 @@ class AppData
 
                 for (frameIndex in 0 until firstKeyFrame.frame)
                 {
-                    frames[frameIndex] = Frame(firstKeyFrame.value)
+                    frames[frameIndex] = SimpleFrame(firstKeyFrame.value)
                 }
 
                 for (frameIndex in lastKeyframe.frame..length)
                 {
-                    frames[frameIndex] = Frame(lastKeyframe.value)
+                    frames[frameIndex] = SimpleFrame(lastKeyframe.value)
                 }
 
                 val lastIndex = keyframes.count() - 1
@@ -140,7 +140,7 @@ class AppData
                     for (frameIndex in curFrame until nextFrame)
                     {
                         val newValue = curValue + increment * (frameIndex - curFrame)
-                        val newFrame = Frame(newValue)
+                        val newFrame = SimpleFrame(newValue)
 
                         frames[frameIndex] = newFrame
 

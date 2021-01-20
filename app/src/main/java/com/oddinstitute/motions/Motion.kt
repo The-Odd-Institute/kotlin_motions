@@ -2,6 +2,7 @@ package com.oddinstitute.motions
 
 import android.graphics.Color
 import android.util.Log
+import kotlin.math.roundToInt
 
 
 class Motion (val id: String)
@@ -16,10 +17,10 @@ class Motion (val id: String)
 
 
     var tx: ArrayList<Keyframe> = arrayListOf()
-    var txF: ArrayList<Frame> = arrayListOf()
+    var txF: ArrayList<SimpleFrame> = arrayListOf()
 
     var ty: ArrayList<Keyframe> = arrayListOf()
-    var tyF: ArrayList<Frame> = arrayListOf()
+    var tyF: ArrayList<SimpleFrame> = arrayListOf()
 
 
 
@@ -76,7 +77,6 @@ class Motion (val id: String)
             return
 
 
-        something ain't workig here'
 
         val lengthRatio = newLength.toFloat() / length.toFloat()
         // 1.2
@@ -84,14 +84,17 @@ class Motion (val id: String)
         val startOffset = newStartFrame - startFrame
 
 
-        Log.d("MyTag", "Start was: $startFrame\nNew Start is: $newStartFrame\nlength was: $length\nnewlength is: $newLength\noffset is: $startOffset\n ratio is: $lengthRatio")
+        Log.d("MyTag", "Start was: $startFrame, New Start is: $newStartFrame\nlength was: $length new length is: $newLength\noffset is: $startOffset\n ratio is: $lengthRatio")
 
 
 
         var newTx = arrayListOf<Keyframe>()
         for (keyframe in this.tx)
         {
-            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).toInt()
+            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).roundToInt()
+
+            Log.d("MyTag", "Keyframe at: ${keyframe.frame} -> $newFrame")
+
             val newKeyframe = Keyframe(newFrame, keyframe.value)
             newTx.add(newKeyframe)
         }
@@ -101,7 +104,9 @@ class Motion (val id: String)
         var newTy = arrayListOf<Keyframe>()
         for (keyframe in this.ty)
         {
-            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).toInt()
+            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).roundToInt()
+            Log.d("MyTag", "Keyframe at: ${keyframe.frame} -> $newFrame")
+
             val newKeyframe = Keyframe(newFrame, keyframe.value)
             newTy.add(newKeyframe)
         }

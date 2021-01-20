@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.constraintlayout.motion.widget.KeyFrames
 
 
 class Clip(context: Context,
@@ -121,6 +122,27 @@ class Clip(context: Context,
                                                   0f))
         rightHandle.setOnTouchListener(onTouchListener())
         layout.addView(rightHandle)
+
+
+
+//        val keyFrames: ArrayList<Keyframe> = arrayListOf()
+//
+//        for (key in motion.tx)
+//        {
+//            keyFrames.add(key)
+//        }
+//        for (key in motion.ty)
+//        {
+//
+//        }
+
+
+
+
+
+
+
+
 
 
         previousWidth = curWidth
