@@ -8,7 +8,7 @@
     tools:context=".MainActivity">
 
     <RelativeLayout
-        android:id="@+id/relativeLayout"
+        android:id="@+id/boom"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginStart="50dp"
@@ -21,76 +21,74 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <View
-            android:id="@+id/redView"
-            android:layout_width="120dp"
-            android:layout_height="120dp"
+<!--        <View-->
+<!--            android:id="@+id/redView"-->
+<!--            android:layout_width="120dp"-->
+<!--            android:layout_height="120dp"-->
 
-            android:layout_alignParentTop="true"
-            android:layout_marginLeft="100dp"
-            android:layout_marginTop="100dp"
-            android:background="@android:color/holo_red_dark" />
+<!--            android:layout_alignParentTop="true"-->
+<!--            android:layout_marginLeft="100dp"-->
+<!--            android:layout_marginTop="100dp"-->
+<!--            android:background="@android:color/holo_red_dark" />-->
     </RelativeLayout>
-
-    <Button
-        android:id="@+id/moveVerticallyButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:layout_marginEnd="21dp"
-        android:text="Run Animations"
-        app:layout_constraintEnd_toEndOf="@+id/relativeLayout"
-        app:layout_constraintTop_toBottomOf="@+id/relativeLayout" />
 
     <SeekBar
         android:id="@+id/timeSeekbar"
         android:layout_width="0dp"
         android:layout_height="44dp"
         android:layout_marginStart="50dp"
-        android:layout_marginEnd="20dp"
-        app:layout_constraintEnd_toStartOf="@+id/timeTextView"
+        android:layout_marginTop="20dp"
+        app:layout_constraintEnd_toEndOf="@+id/boom"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/moveVerticallyButton" />
+        app:layout_constraintTop_toBottomOf="@+id/boom" />
 
     <TextView
         android:id="@+id/timeTextView"
-        android:layout_width="88dp"
-        android:layout_height="88dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_marginEnd="50dp"
         android:background="#673AB7"
         android:gravity="center"
         android:text='32.5"'
         android:textColor="#FFFFFF"
         android:textSize="24sp"
-        app:layout_constraintEnd_toStartOf="@+id/moveVerticallyButton"
-        app:layout_constraintTop_toTopOf="@+id/timeSeekbar" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/relativeLayout2" />
 
     <RelativeLayout
-        android:id="@+id/trackHolder"
 
+        android:id="@+id/relativeLayout2"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:layout_marginTop="2dp"
+        android:layout_marginEnd="50dp"
         android:background="#D6D6D6"
         android:orientation="horizontal"
-        android:padding="10dp"
-        app:layout_constraintEnd_toEndOf="@+id/timeSeekbar"
+        app:layout_constraintEnd_toStartOf="@+id/timeTextView"
         app:layout_constraintStart_toStartOf="@+id/textView5"
         app:layout_constraintTop_toBottomOf="@+id/textView5">
+
+        <RelativeLayout
+            android:id="@+id/playableTrackLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#7A7A7A">
+
+            <View
+                android:id="@+id/timeTick"
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#000000" />
+        </RelativeLayout>
 
         <RelativeLayout
             android:id="@+id/motionsTrackLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentEnd="true"
-            android:background="#FFFFFF"
-            android:orientation="horizontal"></RelativeLayout>
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:background="#007A7A7A" />
 
-        <View
-            android:id="@+id/timeTick"
-            android:layout_width="1dp"
-            android:layout_height="match_parent"
-            android:background="#000000" />
+
     </RelativeLayout>
 
 

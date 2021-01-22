@@ -6,12 +6,13 @@ class AppData
 {
     companion object
     {
-
-        var viewMotions: ArrayList<Motion> = arrayListOf()
-
-
-        fun makeDummyMotions(length: Int)
+        // All Motions have keyframes between 0 to 100
+        // so maximum number of keyframes are 100 (0 to 99)
+        fun makeDummyMotions(length: Int) : ArrayList<MotionData>
         {
+            var allMotionsData: ArrayList<MotionData> = arrayListOf()
+
+
             val keyframeTranslateX_1 =
                     Keyframe(0,
                              100f)
@@ -20,149 +21,85 @@ class AppData
                              180f)
 
             val keyframeTranslateX_3 =
-                    Keyframe(45,
+                    Keyframe(275,
                              900f)
 
-            val moveRightMotion = Motion(java.util.UUID.randomUUID().toString())
+            val moveRightMotion = Motion()
+
+
+            moveRightMotion.translateX.addKeyframe(keyframeTranslateX_1)
+            moveRightMotion.translateX.addKeyframe(keyframeTranslateX_2)
+            moveRightMotion.translateX.addKeyframe(keyframeTranslateX_3)
+
+
             moveRightMotion.name = "Move Right"
             moveRightMotion.color =
                     Color.argb(0.5f,
                                .8f,
                                .1f,
                                .1f)
-            moveRightMotion.tx.add(keyframeTranslateX_1)
-            moveRightMotion.tx.add(keyframeTranslateX_2)
-            moveRightMotion.tx.add(keyframeTranslateX_3)
+            val moveRightMotionData = MotionData(java.util.UUID.randomUUID().toString(),
+                                                 moveRightMotion)
 
-            viewMotions.add(moveRightMotion)
+            allMotionsData.add(moveRightMotionData)
+
 
 
             val keyframeTranslateY_1 =
-                    Keyframe(45,
+                    Keyframe(32,
                              100f)
             val keyframeTranslateY_2 =
-                    Keyframe(87,
+                    Keyframe(38,
                              300f)
 
             val keyframeTranslateY_3 =
-                    Keyframe(107,
+                    Keyframe(49,
                              -400f)
 
             val keyframeTranslateY_4 =
-                    Keyframe(137,
+                    Keyframe(77,
                              300f)
 
-            val moveDownMotion = Motion(java.util.UUID.randomUUID().toString())
+
+            val moveDownMotion = Motion()
+
+//            moveDownMotion.yTranslateMap[45] = 100f
+//            moveDownMotion.yTranslateMap[87] = 300f
+//            moveDownMotion.yTranslateMap[107] = -400f
+//            moveDownMotion.yTranslateMap[137] = 300f
+            moveDownMotion.translateY.addKeyframe(keyframeTranslateY_1)
+            moveDownMotion.translateY.addKeyframe(keyframeTranslateY_2)
+            moveDownMotion.translateY.addKeyframe(keyframeTranslateY_3)
+            moveDownMotion.translateY.addKeyframe(keyframeTranslateY_4)
+
+//            viewMotions.add(moveDownMotion)
+
+            moveDownMotion.name = "Move Down"
             moveDownMotion.color =
                     Color.argb(0.5f,
                                .1f,
                                .1f,
                                .8f)
+            val moveDownMotionData = MotionData(java.util.UUID.randomUUID().toString(), moveDownMotion)
 
-            moveDownMotion.ty.add(keyframeTranslateY_1)
-            moveDownMotion.ty.add(keyframeTranslateY_2)
-            moveDownMotion.ty.add(keyframeTranslateY_3)
-            moveDownMotion.ty.add(keyframeTranslateY_4)
-            moveDownMotion.name = "Move Down"
+            // temporary
 
-            viewMotions.add(moveDownMotion)
+            // motionData.add(moveDownMotionData)
 
 
-            for (i in 0 until viewMotions.count())
+            for (data in allMotionsData)
             {
-                viewMotions[i] = makeFramesForMotion(viewMotions[i], length)
+                data.motion.makePlaybackFrames(length)
             }
 
+
+//            for (i in 0 until viewMotions.count())
+//            {
+//                viewMotions[i] = makeFramesForMotion(viewMotions[i], length)
+//            }
+
+            return allMotionsData
         }
-
-
-
-        fun makeFramesForChannel (keyframes: ArrayList<Keyframe>, length: Int) : ArrayList <SimpleFrame>
-        {
-
-            var frames = ArrayList<SimpleFrame>()
-
-            if (keyframes.count() == 0 )
-            {
-//            Log.d(TAG, "No Keyframes")
-            }
-            else if (keyframes.count() == 1)
-            {
-//            Log.d(TAG, "One Keyframe")
-
-                val keyframe = keyframes[0]
-                for (i in 0..length)
-                {
-                    val frame = SimpleFrame(keyframe.value)
-                    frames.add(frame)
-                }
-            }
-            else // 2 or more keyframes
-            {
-//            Log.d(TAG, "Many Keyframes")
-
-                // fill the frames
-                for (i in 0..length)
-                {
-                    frames.add(SimpleFrame(0f))
-                }
-
-                val firstKeyFrame = keyframes.first()
-                val lastKeyframe = keyframes.last()
-
-                for (frameIndex in 0 until firstKeyFrame.frame)
-                {
-                    frames[frameIndex] = SimpleFrame(firstKeyFrame.value)
-                }
-
-                for (frameIndex in lastKeyframe.frame..length)
-                {
-                    frames[frameIndex] = SimpleFrame(lastKeyframe.value)
-                }
-
-                val lastIndex = keyframes.count() - 1
-
-                for (index in 0 until lastIndex)
-                {
-                    val curKeyframe = keyframes[index]
-                    val curValue = curKeyframe.value
-                    val curFrame = curKeyframe.frame
-
-                    val nextKeyframe = keyframes[index + 1]
-                    val nextValue = nextKeyframe.value
-                    val nextFrame = nextKeyframe.frame
-
-                    val diffValue = nextValue - curValue
-                    val diffFrame = nextFrame - curFrame
-
-                    val increment = diffValue / diffFrame.toFloat()
-
-                    for (frameIndex in curFrame until nextFrame)
-                    {
-                        val newValue = curValue + increment * (frameIndex - curFrame)
-                        val newFrame = SimpleFrame(newValue)
-
-                        frames[frameIndex] = newFrame
-
-//                    Log.d(TAG, "Val is: ${newValue}")
-                    }
-                }
-            }
-            return frames
-        }
-
-
-
-        fun makeFramesForMotion (motion : Motion, length: Int) : Motion
-        {
-            val newMotion = motion
-
-            newMotion.txF = makeFramesForChannel(motion.tx, length)
-            newMotion.tyF = makeFramesForChannel(motion.ty, length)
-
-            return newMotion
-        }
-
 
     }
 }

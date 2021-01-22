@@ -3,135 +3,66 @@ package com.oddinstitute.motions
 import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
+import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlin.math.roundToInt
 
 
-//enum class GroupChannel
-//{
-//    TranslateX,
-//    TranslateY,
-//
-//    Rotate,
-//
-//    ScaleX,
-//    ScaleY,
-//
-//    Alpha,
-//}
-//
-//enum class PolyChannel
-//{
-//    Data,
-//    Alpha,
-//    FillColor,
-//    StrokeColor
-//}
+/*
+NOTES
+
+Single Keyframes are not allowed
+ */
 
 
-//class CovarianceSample<T>
+
 
 
 class MainActivity : AppCompatActivity()
 {
-    val TAG = "MyTag"
-    val lengthInSeconds = 5.5f
+    lateinit var redView: DrawView
+
+    val duration = 5.5f
+
     var currentTime = 1.1f
     var currentFrame = 0
 
+    var trackLayoutWidth : Int = 0
+    var trackLayoutHeight : Int = 0
 
-    var motionsTrackLayoutWidth = 0
-    var motionsTrackLayoutHeight = 0
+    var playableLayoutWidth : Int = 0
+    var playableOffsetFromLayout = 0
+
+    var frameWidth: Int = 0
+
+    var motionClips: ArrayList<Clip> = arrayListOf()
 
 
-    fun addMotionToTrack(motion: Motion)
+    fun measureFrameWidth ()
     {
-        motion.calculateStartEndLength()
-
-
-        // we now have the start and end frames
-
-
-//        val width =
-//                (motion.length.toFloat() / Time.secondsToFrame(lengthInSeconds)
-//                        .toFloat()) * motionsTrackLayoutWidth
-//        val marginLeft =
-//                (motion.startFrame.toFloat() / Time.secondsToFrame(lengthInSeconds)
-//                        .toFloat()) * motionsTrackLayoutWidth
-
-
-        val motionClip = Clip(this,
-                              Time.secondsToFrame(lengthInSeconds),
-                              motion,
-                              motionsTrackLayoutHeight,
-                              motionsTrackLayoutWidth,
-                              motionsTrackLayout)
-
-//        val motionClip = Clip(width.toInt(),
-//                              motionsTrackLayoutHeight,
-//                              marginLeft.toInt(),
-//                              this,
-//                              motion,
-//                              motionsTrackLayout)
-
-
+        // you need to add one so that the last frame shows
+        frameWidth = (playableLayoutWidth.toFloat() / (duration.toFrames() + 1 ).toFloat()).roundToInt()
     }
 
 
-//    fun makeAllFramesForMotion()
-//    {
-//        for (i in 0 until viewMotions.count())
-//        {
-//            val motion = viewMotions[i]
-//            motion.txF.clear()
-//            motion.tyF.clear()
-//
-//            if (motion.tx.count() > 0)
-//            {
-//                // make txF
-//
-//                var tempValue = 1f
-//                for (i in 0..137)
-//                {
-//                    tempValue += 2.75f
-//                    val frame = Frame(tempValue)
-//                    motion.txF.add(frame)
-//                }
-//            }
-//            if (motion.ty.count() > 0)
-//            {
-//                // make tyF
-//
-//                var tempValue1 = 1f
-//                for (i in 0..137)
-//                {
-//                    tempValue1 += 4.75f
-//                    val frame = Frame(tempValue1)
-//                    motion.tyF.add(frame)
-//                }
-//            }
-//
-//            viewMotions[i] = motion
-//        }
-//    }
-
-//    var viewMotions: ArrayList<Motion> = arrayListOf()
 
 
     fun placeTimeTick()
     {
         val ratio =
-                motionsTrackLayoutWidth / Time.secondsToFrame(lengthInSeconds)
+                (playableLayoutWidth.toFloat() / (duration.toFrames() + 1))  // Time.toFrames(shotTime)
                         .toFloat() // 2.45
 
         val place = currentFrame.toFloat() * ratio
 
 
-        val myParams = RelativeLayout.LayoutParams(pixelsFromDp(3),
+        val myParams = RelativeLayout.LayoutParams(/*pixelsFromDp(3)*/ frameWidth,
                                                    ViewGroup.LayoutParams.MATCH_PARENT)
 
 
@@ -153,118 +84,188 @@ class MainActivity : AppCompatActivity()
         return pixels.toInt()
     }
 
+    fun addMotionClips ()
+    {
+        motionClips.clear()
+
+        for (data in redView.motionData)
+        {
+            data.clip = Clip()
+
+            data.motion.calculateStartLength()
+
+            data.clip = Clip(this,
+                            duration.toFrames(),
+                            playableOffsetFromLayout,
+                             data,
+                            trackLayoutHeight,
+                            playableLayoutWidth,
+                            trackLayoutWidth,
+                            motionsTrackLayout)
+        }
+    }
+
+
+    fun viewTreeListener () : ViewTreeObserver.OnGlobalLayoutListener
+    {
+        return object : OnGlobalLayoutListener
+        {
+            override fun onGlobalLayout()
+            {
+                motionsTrackLayout.viewTreeObserver
+                        .removeOnGlobalLayoutListener(this)
+
+                trackLayoutWidth =
+                        motionsTrackLayout.width
+                trackLayoutHeight =
+                        motionsTrackLayout.height
+
+                playableLayoutWidth =
+                        playableTrackLayout.width
+
+                // do these after finding the widths
+                addMotionClips()
+                measureFrameWidth()
+                placeTimeTick ()
+            }
+        }
+    }
+
+    fun playBackAll()
+    {
+        playBack(redView)
+    }
+
+    fun playBack(view: View)
+    {
+        timeTextView.text =
+                "${currentFrame.toSeconds() /*Time.toSeconds(progress)*/}\n${currentFrame}"
+
+        placeTimeTick()
+
+        var txOfAllMotions = 0f
+        var numberOfMotionsWithTx = 0
+        var tyOfAllMotions = 0f
+        var numberOfMotionsWithTy = 0
+
+        for (data in redView.motionData)
+        {
+            // TX - because single keyframes are not allowed
+            if (data.motion.translateX.playbackFrames.count() > 0)
+            {
+                numberOfMotionsWithTx += 1
+                txOfAllMotions += data.motion.translateX.playbackFrames[currentFrame]
+            }
+
+            // TX - because single keyframes are not allowed
+            if (data.motion.translateY.playbackFrames.count() > 0)
+            {
+                numberOfMotionsWithTy += 1
+                tyOfAllMotions += data.motion.translateY.playbackFrames[currentFrame]
+            }
+        }
+
+        if (numberOfMotionsWithTx != 0)
+        {
+            view.translationX = (txOfAllMotions / numberOfMotionsWithTx.toFloat())
+        }
+
+        if (numberOfMotionsWithTy != 0)
+        {
+            view.translationY = (tyOfAllMotions / numberOfMotionsWithTy.toFloat())
+        }
+
+    }
+
+
+
+    fun seekBarListener () : SeekBar.OnSeekBarChangeListener
+    {
+        timeSeekbar.max = duration.toFrames() //  Time.toFrames(shotTime)
+        timeSeekbar.progress = currentTime.toFrames() //  Time.toFrames(currentTime)
+        timeTextView.text = "${ /*Time.toSeconds(timeSeekbar.progress)*/ timeSeekbar.progress.toSeconds()}\n${timeSeekbar.progress}"
+
+        return object : SeekBar.OnSeekBarChangeListener
+        {
+            override fun onProgressChanged(seekBar: SeekBar,
+                                           progress: Int,
+                                           b: Boolean)
+            {
+                currentFrame = progress
+                playBackAll()
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar)
+            {
+                // Do something
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar)
+            {
+                // Do something
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        AppData.makeDummyMotions(Time.secondsToFrame(lengthInSeconds))
+        addTempView ()
 
+
+
+
+
+
+        timeSeekbar.setOnSeekBarChangeListener(seekBarListener())
 
         motionsTrackLayout.viewTreeObserver
-                .addOnGlobalLayoutListener(object : OnGlobalLayoutListener
-                                           {
-                                               override fun onGlobalLayout()
-                                               {
-                                                   motionsTrackLayout.viewTreeObserver
-                                                           .removeOnGlobalLayoutListener(this)
-                                                   motionsTrackLayoutWidth =
-                                                           motionsTrackLayout.width
-                                                   motionsTrackLayoutHeight =
-                                                           motionsTrackLayout.height
-
-                                                   for (i in 0 until AppData.viewMotions.count())
-                                                   {
-//                                                       if (i == 1 )
-                                                       addMotionToTrack(AppData.viewMotions[i])
-                                                   }
-                                               }
-                                           })
+                .addOnGlobalLayoutListener(viewTreeListener())
 
 
-//        makeDummyMotions()
 
 
-//        makeAllFramesForMotion()
+        var playableMargins = 80
+        var playableParams = playableTrackLayout.layoutParams as RelativeLayout.LayoutParams
+        playableParams.setMargins(playableMargins, 10, playableMargins, 10)
+        playableTrackLayout.layoutParams = playableParams
 
-//        moveVerticallyButton.setOnClickListener {
-//
-//            val ty1 = ObjectAnimator.ofFloat(redView,
-//                                             View.TRANSLATION_X,
-//                                             redView.translationX,
-//                                             redView.translationX + 200f) // this way, we add
-//            ty1.duration = 500
-//            ty1.interpolator = LinearInterpolator() // BounceInterpolator()
-//            ty1.start()
-//
-//        }
+        playableOffsetFromLayout = playableMargins
 
 
-        timeSeekbar.max = Time.secondsToFrame(lengthInSeconds)
-        timeSeekbar.progress = Time.secondsToFrame(currentTime)
-        timeTextView.text = "${Time.framesToSeconds(timeSeekbar.progress)}\n${timeSeekbar.progress}"
-
-
-        timeSeekbar.setOnSeekBarChangeListener(
-                object : SeekBar.OnSeekBarChangeListener
-                {
-                    override fun onProgressChanged(seekBar: SeekBar,
-                                                   progress: Int,
-                                                   b: Boolean)
-                    {
-                        timeTextView.text = "${Time.framesToSeconds(progress)}\n${progress}"
-
-                        currentFrame = progress
-                        placeTimeTick()
-
-                        var tx = 0f
-                        var ty = 0f
-
-                        var txCounter = 0
-                        var tyCounter = 0
-
-                        for (motion in AppData.viewMotions)
-                        {
-                            if (motion.txF.count() > 0)
-                            {
-                                txCounter += 1
-                                tx = motion.txF[progress].value
-                            }
-                            if (motion.tyF.count() > 0)
-                            {
-                                tyCounter += 1
-                                ty = motion.tyF[progress].value
-                            }
-                        }
-
-                        if (txCounter != 0)
-                        {
-                            redView.translationX = (tx / txCounter.toFloat())
-                        }
-
-                        if (tyCounter != 0)
-                        {
-                            redView.translationY = (ty / tyCounter.toFloat())
-                        }
-
-                    }
-
-                    override fun onStartTrackingTouch(seekBar: SeekBar)
-                    {
-                        // Do something
-
-                    }
-
-                    override fun onStopTrackingTouch(seekBar: SeekBar)
-                    {
-                        // Do something
-
-                    }
-                })
 
 
     }
 
+    fun addTempView ()
+    {
+       redView =
+                DrawView(this,
+                         Color.RED)
+        val myParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                                     ViewGroup.LayoutParams.WRAP_CONTENT)
 
+
+        myParams.width = pixelsFromDp(128)
+        myParams.height = pixelsFromDp(128)
+
+        myParams.leftMargin = pixelsFromDp(100)
+        myParams.topMargin = pixelsFromDp(100)
+
+        redView.layoutParams = myParams
+
+
+//        redView.setBackgroundColor(Color.GRAY)
+
+        // here, read the data from somewhere
+
+
+        redView.motionData = AppData.makeDummyMotions(duration.toFrames()) // Time.toFrames(shotTime))
+
+
+        boom.addView(redView)
+
+    }
 }

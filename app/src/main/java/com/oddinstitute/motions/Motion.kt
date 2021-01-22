@@ -5,116 +5,155 @@ import android.util.Log
 import kotlin.math.roundToInt
 
 
-class Motion (val id: String)
+class MotionData (val id: String, var motion: Motion)
 {
-    var startFrame: Int = 10_000
-    var endFrame: Int = 0
-    var length: Int = 0
+    var clip: Clip? = null
+}
 
 
+class Motion
+{
+    var motionOffset: Int = 0
+
+    var clipStart = 100_000
+    var scale: Float = 1.0f
+    var clipLength: Int = 0
     var name: String = "Motion"
     var color: Int = Color.TRANSPARENT
 
 
-    var tx: ArrayList<Keyframe> = arrayListOf()
-    var txF: ArrayList<SimpleFrame> = arrayListOf()
 
-    var ty: ArrayList<Keyframe> = arrayListOf()
-    var tyF: ArrayList<SimpleFrame> = arrayListOf()
+    var translateX: Channel = Channel(ChannelType.TranslateX)
+    var translateY: Channel = Channel(ChannelType.TranslateY)
 
 
+    var channels: Array<Channel> = arrayOf(translateX, translateY)
 
-    fun calculateStartEndLength ()
+
+    fun makePlaybackFrames (length: Int)
     {
+        translateX.makePlaybackFrames(length, motionOffset)
+        translateY.makePlaybackFrames(length, motionOffset)
 
-        for (keyframe in this.tx)
-        {
-            if (keyframe.frame < startFrame)
-                startFrame = keyframe.frame
-
-            if (keyframe.frame > endFrame)
-                endFrame = keyframe.frame
-        }
-
-        for (keyframe in this.ty)
-        {
-            if (keyframe.frame < startFrame)
-                startFrame = keyframe.frame
-
-            if (keyframe.frame > endFrame)
-                endFrame = keyframe.frame
-        }
-
-        length = endFrame - startFrame
-    }
-
-
-//    var all
-
-
-    // we need a system to make sure no two keyframes get added at the same frame
-    // we need a way to add multiple keyframes
-
-//    fun <T> addKeyframe (keyframe: Keyframe<T>)
-//    {
-//        when (keyframe.channel)
+//        for (channel in channels)
 //        {
-//            Channel.TranslateX -> translateX_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.TranslateY -> translateY_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.Rotate -> rotate_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.ScaleX -> scaleX_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.ScaleY -> scaleY_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.Alpha -> alpha_Keys.add(keyframe as Keyframe<Float>)
-//            Channel.FillColor -> fillColor_Keys.add(keyframe as Keyframe<Int>)
-//            Channel.StrokeColor -> strokeColor_Keys.add(keyframe as Keyframe<Int>)
-//            else -> morph_Keys.add(keyframe as Keyframe<Any>)
+//            channel.makePlaybackFrames(length)
 //        }
-//    }
-
-    fun motionResized (newStartFrame: Int, newLength: Int)
-    {
-        if (newStartFrame == startFrame && newLength == length)
-            return
-
-
-
-        val lengthRatio = newLength.toFloat() / length.toFloat()
-        // 1.2
-
-        val startOffset = newStartFrame - startFrame
-
-
-        Log.d("MyTag", "Start was: $startFrame, New Start is: $newStartFrame\nlength was: $length new length is: $newLength\noffset is: $startOffset\n ratio is: $lengthRatio")
-
-
-
-        var newTx = arrayListOf<Keyframe>()
-        for (keyframe in this.tx)
-        {
-            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).roundToInt()
-
-            Log.d("MyTag", "Keyframe at: ${keyframe.frame} -> $newFrame")
-
-            val newKeyframe = Keyframe(newFrame, keyframe.value)
-            newTx.add(newKeyframe)
-        }
-        this.tx = newTx
-
-
-        var newTy = arrayListOf<Keyframe>()
-        for (keyframe in this.ty)
-        {
-            val newFrame = ((keyframe.frame + startOffset) * lengthRatio).roundToInt()
-            Log.d("MyTag", "Keyframe at: ${keyframe.frame} -> $newFrame")
-
-            val newKeyframe = Keyframe(newFrame, keyframe.value)
-            newTy.add(newKeyframe)
-        }
-        this.ty = newTy
-
-
-        length = newLength
-        startFrame = newStartFrame
     }
 
+    fun calculateStartLength()
+    {
+        var end: Int = 0
+        for (channel in channels)
+        {
+            for (any in channel.displayKeyframes)
+            {
+                if (any.frame < clipStart)
+                    clipStart = any.frame
+
+                if (any.frame > end)
+                    end = any.frame
+            }
+        }
+        clipLength = end - clipStart
+    }
+
+
+    fun resizeMotionDisplay ()
+    {
+        translateX.displayKeyframes.clear()
+
+        // because actual keyframes are sorted, these are sorted
+        for (each in translateX.actualKeyframes)
+        {
+            val newFrame = (each.frame  * scale).roundToInt()
+            val newKeyframe = Keyframe(newFrame, each.value)
+
+            translateX.displayKeyframes.add(newKeyframe)
+        }
+
+
+        translateY.displayKeyframes.clear()
+
+        // because actual keyframes are sorted, these are sorted
+        for (each in translateY.actualKeyframes)
+        {
+            val newFrame = (each.frame  * scale).roundToInt()
+            val newKeyframe = Keyframe(newFrame, each.value)
+
+            translateY.displayKeyframes.add(newKeyframe)
+        }
+    }
+
+    /*
+    fun scaleMotion ()
+    {
+
+        var newChannelTranslateX: Channel = Channel(ChannelType.TranslateX)
+
+        for (any in translateX.displayKeyframes)
+        {
+            val newFrame = ((any.frame + startOffset) * scale).roundToInt()
+            val newKeyframe = Keyframe(newFrame, any.value)
+
+            newChannelTranslateX.addKeyframe(newKeyframe)
+        }
+        newChannelTranslateX.sortIt()
+        this.translateX = newChannelTranslateX
+
+        var newChannelTranslateY: Channel = Channel(ChannelType.TranslateY)
+
+        for (any in translateY.keyframes)
+        {
+            val newFrame = ((any.frame + startOffset) * scale).roundToInt()
+            val newKeyframe = Keyframe(newFrame, any.value)
+
+            newChannelTranslateY.addKeyframe(newKeyframe)
+        }
+        newChannelTranslateY.sortIt()
+        this.translateY = newChannelTranslateY
+
+        clipLength = newLength
+        curStart = newStartFrame
+    }
+
+     */
+
+
+//    fun motionResized(newStartFrame: Int, newLength: Int)
+//    {
+//        if (newStartFrame == curStart && newLength == clipLength)
+//            return
+//
+//        scale = newLength.toFloat() / clipLength.toFloat()
+//
+//        val startOffset = newStartFrame - curStart
+//
+//        var newChannelTranslateX: Channel = Channel(ChannelType.TranslateX)
+//
+//        for (any in translateX.keyframes)
+//        {
+//            val newFrame = ((any.frame + startOffset) * scale).roundToInt()
+//            val newKeyframe = Keyframe(newFrame, any.value)
+//
+//            newChannelTranslateX.addKeyframe(newKeyframe)
+//        }
+//        newChannelTranslateX.sortIt()
+//        this.translateX = newChannelTranslateX
+//
+//        var newChannelTranslateY: Channel = Channel(ChannelType.TranslateY)
+//
+//        for (any in translateY.keyframes)
+//        {
+//            val newFrame = ((any.frame + startOffset) * scale).roundToInt()
+//            val newKeyframe = Keyframe(newFrame, any.value)
+//
+//            newChannelTranslateY.addKeyframe(newKeyframe)
+//        }
+//        newChannelTranslateY.sortIt()
+//        this.translateY = newChannelTranslateY
+//
+//        clipLength = newLength
+//        curStart = newStartFrame
+//    }
 }

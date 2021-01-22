@@ -3,83 +3,96 @@ package com.oddinstitute.motions
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.constraintlayout.motion.widget.KeyFrames
 
-
-class Clip(context: Context,
-           var totalFrames: Int,
-           var motion: Motion,
-           var holderHeight: Int,
-           var holderWidth: Int,
-        /*var marginLeft: Int,*/
-           var layout: RelativeLayout)
+class Clip
 {
     private var xDelta = 0
     var previousX = 0
 
-    var mainClip: TextView
-    var leftHandle: View
-    var rightHandle: View
+    lateinit var mainClip: TextView
+    lateinit var leftHandle: View
+    lateinit var rightHandle: View
+
+    var scaleMotion = false
+    var offsetMotion = false
 
     var marginLeft = 0
 
 
-    var curWidth: Int = 0
-    var previousWidth : Int = 0
+    var width: Int = 0
+    var previousWidth: Int = 0
 
     var widthAtTouchDown = 1
     var widthAtTouchUp = 1
 
 
+    var xAtTouchDown = 0
+    var xAtTouchUp = 0
+
+
     var widthRatio = 1.0f
 
-    fun widthToLength(width: Float) : Int
-    {
-        // 500 of 1500
-        // x of 137
+    lateinit var context: Context
+    var playableFramesCount: Int = 0
+    var playableMarginToContainer: Int = 0
+    lateinit var motionData: MotionData
+    var containerHeight: Int = 0
+    var playableLayoutWidth: Int = 0
+    var containerWidth: Int = 0
+    lateinit var containerLayout: RelativeLayout
 
-        return ((totalFrames * width) / holderWidth.toFloat()).toInt()
+
+
+    constructor ()
+    {
+        // tis is NEEDED
     }
 
-    fun lengthToWidth (length: Int) : Float
+
+    constructor (context: Context,
+                 playableFramesCount: Int,
+                 playableMarginToContainer: Int,
+                 motionData: MotionData,
+                 containerHeight: Int,
+                 playableLayoutWidth: Int,
+                 containerWidth: Int,
+                 containerLayout: RelativeLayout)
     {
-        // 50 of 137
-        // x of 1500
+        this.context = context
+        this.playableFramesCount = playableFramesCount
+        this.playableMarginToContainer = playableMarginToContainer
+        this.motionData = motionData
+        this.containerHeight = containerHeight
+        this.playableLayoutWidth = playableLayoutWidth
+        this.containerWidth = containerWidth
+        this.containerLayout = containerLayout
 
-        return (length.toFloat() / totalFrames.toFloat()) * holderWidth
-    }
 
-
-    init
-    {
         mainClip = TextView(context)
-        mainClip.text = motion.name
+        mainClip.text = motionData.motion.name
         mainClip.gravity = Gravity.CENTER
         mainClip.setTextColor(Color.BLACK)
         mainClip.textSize = 14f
 
 
-        motion.calculateStartEndLength()
-        curWidth = lengthToWidth(motion.length).toInt()
-//        curWidth = widthToLength(totalFrames, holderWidth).toInt()
-
-
+        motionData.motion.calculateStartLength()
+//        width = lengthToWidth(motion.length).toInt()
+        width = lengthToWidth(motionData.motion.clipLength)
 
 
         val myParams =
-                RelativeLayout.LayoutParams(curWidth,
+                RelativeLayout.LayoutParams(width,
                                             ViewGroup.LayoutParams.MATCH_PARENT)
 
 //        marginLeft = widthToLength(totalFrames, holderWidth).toInt()
 //        marginLeft = lengthToWidth(motion.startFrame, holderWidth)
-        marginLeft = lengthToWidth(motion.startFrame).toInt()
+        marginLeft = lengthToWidth(motionData.motion.clipStart) + playableMarginToContainer
 
 //        Log.d("MyTag", "total widht is: ${holderWidth}\nstartframe is: ${motion.startFrame}\nmargine is: ${marginLeft}\nlength is: ${motion.length}\nwidth is: $curWidth")
 
@@ -89,15 +102,15 @@ class Clip(context: Context,
                             0,
                             0)
         mainClip.layoutParams = myParams
-        mainClip.setBackgroundColor(motion.color)
+        mainClip.setBackgroundColor(motionData.motion.color)
         mainClip.setOnTouchListener(onTouchListener())
-        layout.addView(mainClip)
+        containerLayout.addView(mainClip)
 
 
         leftHandle = View(context)
         val leftHandleParams =
-                RelativeLayout.LayoutParams(holderHeight / 2,
-                                            holderHeight)
+                RelativeLayout.LayoutParams(containerHeight / 2,
+                                            containerHeight)
         leftHandleParams.marginStart = marginLeft
 //        leftHandleParams.setMargins(marginLeft, 0, 0, 0)
         leftHandle.layoutParams = leftHandleParams
@@ -106,14 +119,14 @@ class Clip(context: Context,
                                                  .8f,
                                                  0f))
         leftHandle.setOnTouchListener(onTouchListener())
-        layout.addView(leftHandle)
+        containerLayout.addView(leftHandle)
 
 
         rightHandle = View(context)
         val rightHandleParams =
-                RelativeLayout.LayoutParams(holderHeight / 2,
-                                            holderHeight)
-        rightHandleParams.marginStart = marginLeft + curWidth - holderHeight / 2
+                RelativeLayout.LayoutParams(containerHeight / 2,
+                                            containerHeight)
+        rightHandleParams.marginStart = marginLeft + width - containerHeight / 2
 //        rightHandleParams.setMargins(marginLeft + width - height / 2 , 0, 0, marginLeft)
         rightHandle.layoutParams = rightHandleParams
         rightHandle.setBackgroundColor(Color.argb(.3f,
@@ -121,8 +134,7 @@ class Clip(context: Context,
                                                   .8f,
                                                   0f))
         rightHandle.setOnTouchListener(onTouchListener())
-        layout.addView(rightHandle)
-
+        containerLayout.addView(rightHandle)
 
 
 //        val keyFrames: ArrayList<Keyframe> = arrayListOf()
@@ -137,21 +149,35 @@ class Clip(context: Context,
 //        }
 
 
+        bringToFont()
 
 
-
-
-
-
-
-
-        previousWidth = curWidth
+        previousWidth = width
     }
+
+
+
+    fun widthToLength(width: Int): Int
+    {
+        // 500 of 1500
+        // x of 137
+
+        return ((playableFramesCount * width).toFloat() / playableLayoutWidth.toFloat()).toInt()
+    }
+
+    fun lengthToWidth(length: Int): Int
+    {
+        // 50 of 137
+        // x of 1500
+
+        return ((length.toFloat() / playableFramesCount.toFloat()) * playableLayoutWidth).toInt()
+    }
+
+
+
 
     fun refreshClip()
     {
-
-
         val leftHandleParams: RelativeLayout.LayoutParams =
                 leftHandle.layoutParams as RelativeLayout.LayoutParams
         leftHandleParams.leftMargin = marginLeft
@@ -160,46 +186,78 @@ class Clip(context: Context,
 
         val rightHandleParams: RelativeLayout.LayoutParams =
                 rightHandle.layoutParams as RelativeLayout.LayoutParams
-        rightHandleParams.marginStart = marginLeft + curWidth - holderHeight / 2
+        rightHandleParams.marginStart = marginLeft + width - containerHeight / 2
         rightHandle.layoutParams = rightHandleParams
 
 
         val mainClipParams: RelativeLayout.LayoutParams =
                 mainClip.layoutParams as RelativeLayout.LayoutParams
-        mainClipParams.width = curWidth
+        mainClipParams.width = width
         mainClipParams.leftMargin = marginLeft
         mainClip.layoutParams = mainClipParams
 
-
-        previousWidth = curWidth
-
+        previousWidth = width
     }
 
-    fun updateMotion ()
+//    fun updateMotion() // : Motion
+//    {
+//        widthRatio = widthAtTouchUp.toFloat() / widthAtTouchDown.toFloat()
+//
+//        val newLength = widthToLength(width)
+////        val newStartFrame = widthToLength(marginLeft)
+//
+//        val newOffset = widthToLength(marginLeft)
+//
+//        motionData.motion.motionResized(newStartFrame, newLength)
+//
+//
+//
+//
+//        motionData.motion.makePlaybackFrames(playableFramesCount)
+//
+//
+//        Log.d("Tag", "After update, we have: ${motionData.motion.translateX.playbackFrames.count()} X frames")
+//
+//
+//
+////        for (i in 0 until AppData.viewMotions.count())
+////        {
+////            var motion = AppData.viewMotions[i]
+////
+////            if (motion.id == this.motionData.id)
+////            {
+////                motion.motionResized(newStartFrame,
+////                                     newLength)
+////                motion.makePlaybackFrames(playableFramesCount)
+////                AppData.viewMotions[i] = motion
+////                break
+////            }
+////
+////        }
+//    }
+
+    fun newUpdateMotion() // : Motion
     {
-        widthRatio = widthAtTouchUp.toFloat() / widthAtTouchDown.toFloat()
-
-
-        val newLength = widthToLength(curWidth.toFloat())
-        val newStartFrame = widthToLength(marginLeft.toFloat())
-
-
-
-        for (i in 0 until AppData.viewMotions.count())
+        if (widthAtTouchDown == 0)
         {
-            var testMotion = AppData.viewMotions[i]
-
-            if (testMotion.id == motion.id)
-            {
-                testMotion.motionResized(newStartFrame, newLength)
-                AppData.makeFramesForMotion(testMotion, totalFrames)
-                AppData.viewMotions[i] = testMotion
-                break
-            }
-
+            return
         }
+        // scale changed
+
+            // this is the scale of the clip
+            motionData.motion.scale = widthAtTouchUp.toFloat() / widthAtTouchDown.toFloat()
+
+            val offset = xAtTouchUp - xAtTouchDown
+            // this is the new start for the entirety f the clip
+            // not what gets drawn
+            motionData.motion.motionOffset += widthToLength(offset)
 
 
+            motionData.motion.resizeMotionDisplay()
+
+
+
+        motionData.motion.makePlaybackFrames(playableFramesCount)
     }
 
 
@@ -221,6 +279,7 @@ class Clip(context: Context,
                     bringToFont()
 
                     widthAtTouchDown = lParams.width
+                    xAtTouchDown = lParams.leftMargin
                 }
 
                 MotionEvent.ACTION_MOVE ->
@@ -234,14 +293,14 @@ class Clip(context: Context,
                         leftHandle ->
                         {
                             marginLeft = movedViewLeftMargin
-                            val newWidth = curWidth - changeOfX
-                            curWidth = newWidth
+                            val newWidth = width - changeOfX
+                            width = newWidth
                         }
                         rightHandle ->
                         {
-                            val newWidth = curWidth + changeOfX
-                            curWidth = newWidth
-                            marginLeft = movedViewLeftMargin + holderHeight / 2 - curWidth
+                            val newWidth = width + changeOfX
+                            width = newWidth
+                            marginLeft = movedViewLeftMargin + containerHeight / 2 - width
                         }
                         else ->
                         {
@@ -257,7 +316,11 @@ class Clip(context: Context,
                 {
                     val lParams = view.layoutParams as RelativeLayout.LayoutParams
                     widthAtTouchUp = lParams.width
-                    updateMotion ()
+
+                    xAtTouchUp = lParams.leftMargin
+
+
+                    newUpdateMotion()
                 }
             }
             true
