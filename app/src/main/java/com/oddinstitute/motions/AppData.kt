@@ -6,12 +6,10 @@ class AppData
 {
     companion object
     {
-        // All Motions have keyframes between 0 to 100
-        // so maximum number of keyframes are 100 (0 to 99)
+        // this is dummy data
         fun makeDummyMotions(length: Int) : ArrayList<MotionData>
         {
             var allMotionsData: ArrayList<MotionData> = arrayListOf()
-
 
             val keyframeTranslateX_1 =
                     Keyframe(0,
@@ -26,11 +24,9 @@ class AppData
 
             val moveRightMotion = Motion()
 
-
             moveRightMotion.translateX.addKeyframe(keyframeTranslateX_1)
             moveRightMotion.translateX.addKeyframe(keyframeTranslateX_2)
             moveRightMotion.translateX.addKeyframe(keyframeTranslateX_3)
-
 
             moveRightMotion.name = "Move Right"
             moveRightMotion.color =
@@ -42,8 +38,6 @@ class AppData
                                                  moveRightMotion)
 
             allMotionsData.add(moveRightMotionData)
-
-
 
             val keyframeTranslateY_1 =
                     Keyframe(32,
@@ -62,17 +56,11 @@ class AppData
 
 
             val moveDownMotion = Motion()
-
-//            moveDownMotion.yTranslateMap[45] = 100f
-//            moveDownMotion.yTranslateMap[87] = 300f
-//            moveDownMotion.yTranslateMap[107] = -400f
-//            moveDownMotion.yTranslateMap[137] = 300f
             moveDownMotion.translateY.addKeyframe(keyframeTranslateY_1)
             moveDownMotion.translateY.addKeyframe(keyframeTranslateY_2)
             moveDownMotion.translateY.addKeyframe(keyframeTranslateY_3)
             moveDownMotion.translateY.addKeyframe(keyframeTranslateY_4)
 
-//            viewMotions.add(moveDownMotion)
 
             moveDownMotion.name = "Move Down"
             moveDownMotion.color =
@@ -82,9 +70,9 @@ class AppData
                                .8f)
             val moveDownMotionData = MotionData(java.util.UUID.randomUUID().toString(), moveDownMotion)
 
-            // temporary
 
-            // motionData.add(moveDownMotionData)
+
+            allMotionsData.add(moveDownMotionData)
 
 
             for (data in allMotionsData)
@@ -92,11 +80,6 @@ class AppData
                 data.motion.makePlaybackFrames(length)
             }
 
-
-//            for (i in 0 until viewMotions.count())
-//            {
-//                viewMotions[i] = makeFramesForMotion(viewMotions[i], length)
-//            }
 
             return allMotionsData
         }

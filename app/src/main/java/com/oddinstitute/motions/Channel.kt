@@ -1,12 +1,8 @@
 package com.oddinstitute.motions
 
-import android.util.Log
-
-
 class Channel(type: ChannelType)
 {
     var channelOffset: Int = 0
-
 
     var actualKeyframes: ArrayList<Keyframe> = arrayListOf()
     var displayKeyframes: ArrayList<Keyframe> = arrayListOf()
@@ -116,7 +112,6 @@ class Channel(type: ChannelType)
 
                     playbackFrames[frameIndex] = newValue
                 }
-
             }
         }
     }

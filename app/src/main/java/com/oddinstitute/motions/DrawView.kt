@@ -5,12 +5,8 @@ import android.graphics.*
 import android.view.View
 
 
-
-
-
 class DrawView : View
 {
-
     var motionData : ArrayList<MotionData> = arrayListOf()
 
 

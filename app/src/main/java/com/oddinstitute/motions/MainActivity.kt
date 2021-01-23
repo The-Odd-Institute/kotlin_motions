@@ -18,6 +18,8 @@ import kotlin.math.roundToInt
 NOTES
 
 Single Keyframes are not allowed
+All Motions have keyframes between 0 to 100, so maximum number of keyframes are 100 (0 to 99)
+
  */
 
 
@@ -28,10 +30,12 @@ class MainActivity : AppCompatActivity()
 {
     lateinit var redView: DrawView
 
-    val duration = 5.5f
+    val duration: Float = 5.5f
 
-    var currentTime = 1.1f
-    var currentFrame = 0
+    var currentFrame = 55
+
+
+    var currentTime = 0f
 
     var trackLayoutWidth : Int = 0
     var trackLayoutHeight : Int = 0
@@ -44,13 +48,12 @@ class MainActivity : AppCompatActivity()
     var motionClips: ArrayList<Clip> = arrayListOf()
 
 
+
     fun measureFrameWidth ()
     {
         // you need to add one so that the last frame shows
         frameWidth = (playableLayoutWidth.toFloat() / (duration.toFrames() + 1 ).toFloat()).roundToInt()
     }
-
-
 
 
     fun placeTimeTick()
@@ -121,12 +124,15 @@ class MainActivity : AppCompatActivity()
                         motionsTrackLayout.height
 
                 playableLayoutWidth =
-                        playableTrackLayout.width
+                        playableTimeline.width
 
                 // do these after finding the widths
                 addMotionClips()
                 measureFrameWidth()
                 placeTimeTick ()
+
+                // time is at current frame, so let's update
+                playBack (redView)
             }
         }
     }
@@ -178,12 +184,17 @@ class MainActivity : AppCompatActivity()
     }
 
 
+    private fun setupSeekbar ()
+    {
+        timeSeekbar.max = duration.toFrames()
+        timeSeekbar.progress = currentFrame
+    }
+
 
     fun seekBarListener () : SeekBar.OnSeekBarChangeListener
     {
-        timeSeekbar.max = duration.toFrames() //  Time.toFrames(shotTime)
-        timeSeekbar.progress = currentTime.toFrames() //  Time.toFrames(currentTime)
-        timeTextView.text = "${ /*Time.toSeconds(timeSeekbar.progress)*/ timeSeekbar.progress.toSeconds()}\n${timeSeekbar.progress}"
+//        timeTextView.text = "${ /*Time.toSeconds(timeSeekbar.progress)*/ timeSeekbar.progress.toSeconds()}\n${timeSeekbar.progress}"
+        timeTextView.text = "${timeSeekbar.progress.toSeconds()}"
 
         return object : SeekBar.OnSeekBarChangeListener
         {
@@ -212,32 +223,35 @@ class MainActivity : AppCompatActivity()
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        addTempView ()
+        currentTime = currentFrame.toSeconds()
+        setupSeekbar ()
 
 
-
-
+        addTempView()
 
 
         timeSeekbar.setOnSeekBarChangeListener(seekBarListener())
 
-        motionsTrackLayout.viewTreeObserver
-                .addOnGlobalLayoutListener(viewTreeListener())
+        motionsTrackLayout.viewTreeObserver.addOnGlobalLayoutListener(viewTreeListener())
 
 
+        setupPlayableTimeline ()
+    }
 
 
-        var playableMargins = 80
-        var playableParams = playableTrackLayout.layoutParams as RelativeLayout.LayoutParams
-        playableParams.setMargins(playableMargins, 10, playableMargins, 10)
-        playableTrackLayout.layoutParams = playableParams
+    private fun setupPlayableTimeline ()
+    {
+        val playableParams = playableTimeline.layoutParams as RelativeLayout.LayoutParams
+
+        playableParams.setMargins(playableMargins,
+                                  16,
+                                  playableMargins,
+                                  16)
+        playableTimeline.layoutParams = playableParams
 
         playableOffsetFromLayout = playableMargins
-
-
-
-
     }
+
 
     fun addTempView ()
     {
@@ -247,7 +261,6 @@ class MainActivity : AppCompatActivity()
         val myParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
                                                      ViewGroup.LayoutParams.WRAP_CONTENT)
 
-
         myParams.width = pixelsFromDp(128)
         myParams.height = pixelsFromDp(128)
 
@@ -256,16 +269,7 @@ class MainActivity : AppCompatActivity()
 
         redView.layoutParams = myParams
 
-
-//        redView.setBackgroundColor(Color.GRAY)
-
-        // here, read the data from somewhere
-
-
         redView.motionData = AppData.makeDummyMotions(duration.toFrames()) // Time.toFrames(shotTime))
-
-
         boom.addView(redView)
-
     }
 }

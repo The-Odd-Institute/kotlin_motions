@@ -15,15 +15,14 @@ class Clip
     private var xDelta = 0
     var previousX = 0
 
-    lateinit var mainClip: TextView
-    lateinit var leftHandle: View
-    lateinit var rightHandle: View
+    private lateinit var mainClip: TextView
+    private lateinit var leftHandle: View
+    private lateinit var rightHandle: View
 
-    var scaleMotion = false
-    var offsetMotion = false
+//    var scaleMotion = false
+//    var offsetMotion = false
 
     var marginLeft = 0
-
 
     var width: Int = 0
     var previousWidth: Int = 0
@@ -36,7 +35,7 @@ class Clip
     var xAtTouchUp = 0
 
 
-    var widthRatio = 1.0f
+//    var widthRatio = 1.0f
 
     lateinit var context: Context
     var playableFramesCount: Int = 0
@@ -199,44 +198,8 @@ class Clip
         previousWidth = width
     }
 
-//    fun updateMotion() // : Motion
-//    {
-//        widthRatio = widthAtTouchUp.toFloat() / widthAtTouchDown.toFloat()
-//
-//        val newLength = widthToLength(width)
-////        val newStartFrame = widthToLength(marginLeft)
-//
-//        val newOffset = widthToLength(marginLeft)
-//
-//        motionData.motion.motionResized(newStartFrame, newLength)
-//
-//
-//
-//
-//        motionData.motion.makePlaybackFrames(playableFramesCount)
-//
-//
-//        Log.d("Tag", "After update, we have: ${motionData.motion.translateX.playbackFrames.count()} X frames")
-//
-//
-//
-////        for (i in 0 until AppData.viewMotions.count())
-////        {
-////            var motion = AppData.viewMotions[i]
-////
-////            if (motion.id == this.motionData.id)
-////            {
-////                motion.motionResized(newStartFrame,
-////                                     newLength)
-////                motion.makePlaybackFrames(playableFramesCount)
-////                AppData.viewMotions[i] = motion
-////                break
-////            }
-////
-////        }
-//    }
 
-    fun newUpdateMotion() // : Motion
+    private fun updateMotion()
     {
         if (widthAtTouchDown == 0)
         {
@@ -320,7 +283,7 @@ class Clip
                     xAtTouchUp = lParams.leftMargin
 
 
-                    newUpdateMotion()
+                    updateMotion()
                 }
             }
             true

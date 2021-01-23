@@ -1,24 +1,25 @@
 package com.oddinstitute.motions
 
-enum class ChannelType
+
+enum class ChannelType (val type: String)
 {
     // Group Level Only
-    TranslateX,
-    TranslateY,
+    TranslateX ("Move Horizontally"),
+    TranslateY ("Move Vertically"),
 
-    Rotate,
+    Rotate ("Rotate"),
 
-    ScaleX,
-    ScaleY,
+    ScaleX ("Resize Horizontally"),
+    ScaleY ("Resize Vertically"),
 
 
 
     // Poly Level Only
-    Data,
-    FillColor,
-    StrokeColor,
+    Data ("Shape"),
+    FillColor ("Fill Color"),
+    StrokeColor ("Border Color"),
 
 
     // any Level
-    Alpha
+    Alpha ("Visibility")
 }
